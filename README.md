@@ -16,15 +16,19 @@ Consumable effects and item durations are shown for highlighted items even if in
 
 **Available at:** https://modapi.survivetheforest.net/mod/207/more-graphics-settings
 
-Shows additional graphics settings when **Pause** keyboard button is clicked during gameplay. Some of these settings can boost FPS significantly on potato PCs. Note that **these settings aren't saved between sessions**.
+Shows additional graphics settings when the configurable key (see mod's **Settings** in ModAPI) is held for a short while during gameplay. Some of these settings can boost FPS significantly on potato PCs. Note that **these settings aren't saved between sessions**.
 
 - **CAMERA COMPONENTS:** These are the components attached to the main camera. They are mostly related to post-processing.
   - **HBAO:** a 3rd-party ambient occlusion effect (game has 2 different AO effects enabled at the same time). Disabling it will improve the performance slightly
   - **PostProcessLayer:** disabling this component will deactivate most of the post-processing effects but improve the performance significantly on potato PCs (my FPS jumped from ~20 to ~50)
   - **LuxWater_UnderWaterRendering:** renders the fog that is visible when underwater diving
   - I can't comment on the rest since they don't affect the visuals on the lowest graphics settings on my potato PC. Then can be disabled to improve the performance slightly
-- **POST PROCESSING:** Main post-processing effects
+- **POST PROCESSING:** Main post-processing effects.
 - **POST PROCESSING VOLUMES:** These are the separate post-processing volumes that affect the camera at certain situations (e.g. during a dream or when underwater). *Game* volume seems to affect the camera all the time
+- **LIGHTING SETTINGS:** These variables affect the scene's overall light color and intensity. If *PostProcessLayer* is disabled for performance reasons but then the scene became too dark, these variables can be tweaked to increase brightness without using post-processing:
+  - **Day Ambient Intensity:** Brightness during daytime
+  - **Night Ambient Intensity:** Brightness during night-time
+  - **Light Saturation:** Light's saturation. As this value decreases, light turns orange. As this value increases, light turns blue. Can take negative values
 - **QUALITY SETTINGS:** Some additional graphics settings:
   - **Anisotrophic Filtering:** When enabled, textures look smoother at oblique viewing angles but performance may decrease
   - **LOD Distance Multiplier:** As this number increases, more detailed level-of-detail (LOD) versions of the models are displayed near the player

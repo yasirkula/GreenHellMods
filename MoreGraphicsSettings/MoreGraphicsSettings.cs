@@ -20,6 +20,12 @@ namespace GreenHell_MoreGraphicsSettings
 	{
 		private bool uiVisible = false;
 
+		private bool interactionKeyRegistered = false;
+		private float interactionKeyHeldTime = 0f;
+
+		private KeyCode toggleKey = KeyCode.O;
+
+		private TOD_Sky skyComponent;
 		private Component[] components = new Component[0];
 		private PostProcessVolume[] postProcessing = new PostProcessVolume[0];
 
@@ -37,35 +43,61 @@ namespace GreenHell_MoreGraphicsSettings
 
 		private Vector2 scrollPos;
 
+		private void Start()
+		{
+			toggleKey = GetConfigurableKey( "MoreGraphicsSettings", "ToggleKey", toggleKey );
+		}
+
 		private void Update()
 		{
-			// Toggle the menu with Pause key
-			if( Input.GetKeyDown( KeyCode.Pause ) )
+			// Toggle the menu by holding the toggleKey (can be configured via ModAPI's user interface)
+			if( Input.GetKeyDown( toggleKey ) )
 			{
-				SetUIVisible( !uiVisible );
-
-				if( uiVisible )
+				interactionKeyRegistered = true;
+				interactionKeyHeldTime = 0f;
+			}
+			else if( interactionKeyRegistered )
+			{
+				if( Input.GetKeyUp( toggleKey ) )
+					interactionKeyRegistered = false;
+				else
 				{
-					// Fetch components attached to MainCamera
-					List<Component> cameraComponents = new List<Component>( 32 );
-					CameraManager.Get().m_MainCamera.GetComponents<Component>( cameraComponents );
-					for( int i = cameraComponents.Count - 1; i >= 0; i-- )
+					interactionKeyHeldTime += Time.unscaledDeltaTime;
+					if( interactionKeyHeldTime >= 0.5f )
 					{
-						Component component = cameraComponents[i];
-						if( !component || excludedComponents.Contains( component.GetType() ) || !( component is Behaviour ) )
-							cameraComponents.RemoveAt( i );
-
-						//ModAPI.Log.Write( "COMPONENT: " + component );
+						interactionKeyRegistered = false;
+						ToggleUI();
 					}
-
-					components = cameraComponents.ToArray();
-					postProcessing = PostProcessManager.Get() ? PostProcessManager.Get().GetComponentsInChildren<PostProcessVolume>() : new PostProcessVolume[0];
 				}
 			}
 
 			// Allow closing the menu with ESC key
 			if( uiVisible && Input.GetKeyDown( KeyCode.Escape ) )
 				SetUIVisible( false );
+		}
+
+		private void ToggleUI()
+		{
+			SetUIVisible( !uiVisible );
+
+			if( uiVisible )
+			{
+				// Fetch components attached to MainCamera
+				List<Component> cameraComponents = new List<Component>( 32 );
+				CameraManager.Get().m_MainCamera.GetComponents<Component>( cameraComponents );
+				for( int i = cameraComponents.Count - 1; i >= 0; i-- )
+				{
+					Component component = cameraComponents[i];
+					if( !component || excludedComponents.Contains( component.GetType() ) || !( component is Behaviour ) )
+						cameraComponents.RemoveAt( i );
+
+					//ModAPI.Log.Write( "COMPONENT: " + component );
+				}
+
+				skyComponent = TOD_Sky.Instance;
+				components = cameraComponents.ToArray();
+				postProcessing = PostProcessManager.Get() ? PostProcessManager.Get().GetComponentsInChildren<PostProcessVolume>() : new PostProcessVolume[0];
+			}
 		}
 
 		private void OnGUI()
@@ -79,7 +111,12 @@ namespace GreenHell_MoreGraphicsSettings
 
 			// Show a close button at top right corner
 			if( GUI.Button( new Rect( Screen.width * 0.72f, Screen.height * 0.2f - Screen.width * 0.03f, Screen.width * 0.03f, Screen.width * 0.03f ), "X" ) )
+			{
 				SetUIVisible( false );
+
+				// Release keyboard focus from TextFields
+				GUI.FocusControl( null );
+			}
 
 			GUILayout.BeginArea( new Rect( Screen.width * 0.25f, Screen.height * 0.2f, Screen.width * 0.5f, Screen.height * 0.6f ), GUI.skin.window );
 
@@ -159,6 +196,17 @@ namespace GreenHell_MoreGraphicsSettings
 			}
 
 			GUI.enabled = _guiEnabled;
+
+			// Allow changing light intensity
+			if( skyComponent )
+			{
+				GUILayout.Space( 15f );
+				GUILayout.Label( "= LIGHTING SETTINGS =" );
+
+				skyComponent.Day.AmbientMultiplier = FloatField( "Day Ambient Intensity: ", skyComponent.Day.AmbientMultiplier );
+				skyComponent.Night.AmbientMultiplier = FloatField( "Night Ambient Intensity: ", skyComponent.Night.AmbientMultiplier );
+				skyComponent.Ambient.Saturation = FloatField( "Light Saturation: ", skyComponent.Ambient.Saturation );
+			}
 
 			// Allow changing QualitySettings parameters
 			GUILayout.Space( 15f );
@@ -254,6 +302,9 @@ namespace GreenHell_MoreGraphicsSettings
 				// We aren't just saying "numberFieldStrValues[numberFieldIndex] = value" here because value can further
 				// be modified by the caller function in OnGUI. We want to fetch that updated value in the next frame
 				numberFieldUpdateStrValues[numberFieldIndex] = true;
+
+				// Release keyboard focus from TextField
+				GUI.FocusControl( null );
 			}
 			GUI.enabled = _guiEnabled;
 
@@ -279,6 +330,38 @@ namespace GreenHell_MoreGraphicsSettings
 				player.UnblockRotation();
 				player.UnblockInspection();
 			}
+		}
+
+		// Returns configurable key's corresponding KeyCode by parsing RuntimeConfiguration.xml
+		private KeyCode GetConfigurableKey( string modID, string keyID, KeyCode defaultValue )
+		{
+			string configurationFile = Application.dataPath + "/../Mods/RuntimeConfiguration.xml";
+			if( System.IO.File.Exists( configurationFile ) )
+			{
+				string configuration = System.IO.File.ReadAllText( configurationFile );
+				string modTag = "<Mod ID=\"" + modID + "\"";
+				int modTagStart = configuration.IndexOf( modTag );
+				if( modTagStart >= 0 )
+				{
+					int nextModTagStart = configuration.IndexOf( "<Mod ID=", modTagStart + modTag.Length );
+					int modTagEnd = ( nextModTagStart > modTagStart ) ? nextModTagStart : configuration.Length;
+
+					string keyTag = "<Button ID=\"" + keyID + "\">";
+					int keyTagStart = configuration.IndexOf( keyTag, modTagStart + modTag.Length );
+					if( keyTagStart > modTagStart && keyTagStart < modTagEnd )
+					{
+						int keyTagEnd = configuration.IndexOf( "</Button>", keyTagStart + keyTag.Length );
+						if( keyTagEnd > keyTagStart && keyTagEnd < modTagEnd )
+						{
+							string keyStr = configuration.Substring( keyTagStart + keyTag.Length, keyTagEnd - keyTagStart - keyTag.Length );
+							if( keyStr.Length > 0 && System.Enum.IsDefined( typeof( KeyCode ), keyStr ) )
+								return (KeyCode) System.Enum.Parse( typeof( KeyCode ), keyStr );
+						}
+					}
+				}
+			}
+
+			return defaultValue;
 		}
 	}
 }

@@ -1,10 +1,18 @@
 <Mod ID="MoreGraphicsSettings">
   <Compatible>2.0.4</Compatible>
+  <Button Standard="O" ID="ToggleKey">
+    <Name>
+      <EN>Toggle Key</EN>
+    </Name>
+    <Description>
+      <EN>When held for a short while, toggles the visibility of more graphics menu</EN>
+    </Description>
+  </Button>
   <Name>
     <EN>More Graphics Settings</EN>
   </Name>
   <Description>
-    <EN>Shows additional graphics settings when Pause keyboard button is clicked during gameplay.</EN>
+    <EN>Shows additional graphics settings when the configurable key (see Settings) is held for a short while during gameplay.</EN>
   </Description>
-  <Version>1.0.0.0</Version>
+  <Version>1.0.0.1</Version>
 </Mod>
