@@ -1,0 +1,10 @@
+<Mod ID="MoreGraphicsSettings">
+  <Compatible>2.0.4</Compatible>
+  <Name>
+    <EN>More Graphics Settings</EN>
+  </Name>
+  <Description>
+    <EN>Shows additional graphics settings when Pause keyboard button is clicked during gameplay.</EN>
+  </Description>
+  <Version>1.0.0.0</Version>
+</Mod>

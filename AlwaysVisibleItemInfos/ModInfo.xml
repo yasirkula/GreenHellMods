@@ -1,0 +1,10 @@
+<Mod ID="AlwaysVisibleItemInfos">
+  <Compatible>2.0.4</Compatible>
+  <Name>
+    <EN>Always Visible Item Infos</EN>
+  </Name>
+  <Description>
+    <EN>Consumable effects and item durations are shown for highlighted items even if inventory isn't open.</EN>
+  </Description>
+  <Version>1.0.0.0</Version>
+</Mod>
