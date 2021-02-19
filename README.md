@@ -36,14 +36,14 @@ Shows additional graphics settings when the configurable key (see mod's **Settin
   - **Maximum Pixel Lights:** Number of lights that illuminate objects per-pixel. Remaining lights will illuminate objects per-vertex (which is faster)
   - **Shadows:** Toggles all shadows
   - **Soft Particles:** Particles that are close to surfaces will fade out smoothly
-  - **Soft Vegatation:** Have no idea
+  - **Soft Vegetation:** Have no idea
   - **Animated Skin Quality:** As this number decreases, the performance will improve but visual artifacts like jagged edges may occur on human and animal models
 
 ## Quick Crafting
 
 **Available at:** https://modapi.survivetheforest.net/mod/209/quick-crafting
 
-In inventory, click **Z** or **C** keys to quickly send the hovered item to the crafting table (instead of having to drag&drop it manually).
+In inventory, click the configurable key (see mod's **Settings** in ModAPI) to quickly send the hovered item to the crafting table (instead of having to drag&drop it manually).
 
 ## Quick Eating
 

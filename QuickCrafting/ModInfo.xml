@@ -1,10 +1,18 @@
 <Mod ID="QuickCrafting">
   <Compatible>2.0.4</Compatible>
+  <Button Standard="X" ID="CraftKey">
+    <Name>
+      <EN>Hotkey</EN>
+    </Name>
+    <Description>
+      <EN>When pressed, highlighted item will be moved to the crafting table</EN>
+    </Description>
+  </Button>
   <Name>
     <EN>Quick Crafting</EN>
   </Name>
   <Description>
-    <EN>In inventory, click Z or C to quickly send the hovered item to the crafting table.</EN>
+    <EN>In inventory, click the configurable key (see Settings) to quickly send the hovered item to the crafting table.</EN>
   </Description>
-  <Version>1.0.0.0</Version>
+  <Version>1.0.0.1</Version>
 </Mod>

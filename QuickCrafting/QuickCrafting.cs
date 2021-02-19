@@ -16,23 +16,24 @@ namespace GreenHell_QuickCrafting
 	public class QuickCrafting : MonoBehaviour
 	{
 		private AudioClip dropItemToTableClip;
+		private KeyCode hotkey = KeyCode.X;
 
-		private void Awake()
+		private void Start()
 		{
 			dropItemToTableClip = Resources.Load( "Sounds/Items/click_drop_item_backpack" ) as AudioClip;
+			hotkey = GetConfigurableKey( "QuickCrafting", "CraftKey", hotkey );
 		}
 
 		private void Update()
 		{
-			// If Z or X keys are pressed while hovering an item in inventory, move the item to crafting table
+			// If the configurable hotkey is pressed while hovering an item in inventory, move the item to crafting table
 			Inventory3DManager inventory = Inventory3DManager.Get();
 			CraftingManager craftingTable = CraftingManager.Get();
-			
+
 			if( inventory && craftingTable && inventory.IsActive() && inventory.m_FocusedItem && !inventory.m_FocusedItem.m_OnCraftingTable &&
 				!inventory.m_CarriedItem && inventory.CanSetCarriedItem( true ) &&
 				TriggerController.Get().GetBestTrigger() && TriggerController.Get().GetBestTrigger().gameObject == inventory.m_FocusedItem.gameObject &&
-				!HUDItem.Get().m_Active &&
-				( Input.GetKeyDown( KeyCode.Z ) || Input.GetKeyDown( KeyCode.X ) ) )
+				!HUDItem.Get().m_Active && Input.GetKeyDown( hotkey ) )
 			{
 				craftingTable.Activate();
 
@@ -50,6 +51,38 @@ namespace GreenHell_QuickCrafting
 				if( dropItemToTableClip )
 					inventory.GetComponent<AudioSource>().PlayOneShot( dropItemToTableClip );
 			}
+		}
+
+		// Returns configurable key's corresponding KeyCode by parsing RuntimeConfiguration.xml
+		private KeyCode GetConfigurableKey( string modID, string keyID, KeyCode defaultValue )
+		{
+			string configurationFile = Application.dataPath + "/../Mods/RuntimeConfiguration.xml";
+			if( System.IO.File.Exists( configurationFile ) )
+			{
+				string configuration = System.IO.File.ReadAllText( configurationFile );
+				string modTag = "<Mod ID=\"" + modID + "\"";
+				int modTagStart = configuration.IndexOf( modTag );
+				if( modTagStart >= 0 )
+				{
+					int nextModTagStart = configuration.IndexOf( "<Mod ID=", modTagStart + modTag.Length );
+					int modTagEnd = ( nextModTagStart > modTagStart ) ? nextModTagStart : configuration.Length;
+
+					string keyTag = "<Button ID=\"" + keyID + "\">";
+					int keyTagStart = configuration.IndexOf( keyTag, modTagStart + modTag.Length );
+					if( keyTagStart > modTagStart && keyTagStart < modTagEnd )
+					{
+						int keyTagEnd = configuration.IndexOf( "</Button>", keyTagStart + keyTag.Length );
+						if( keyTagEnd > keyTagStart && keyTagEnd < modTagEnd )
+						{
+							string keyStr = configuration.Substring( keyTagStart + keyTag.Length, keyTagEnd - keyTagStart - keyTag.Length );
+							if( keyStr.Length > 0 && System.Enum.IsDefined( typeof( KeyCode ), keyStr ) )
+								return (KeyCode) System.Enum.Parse( typeof( KeyCode ), keyStr );
+						}
+					}
+				}
+			}
+
+			return defaultValue;
 		}
 	}
 }
