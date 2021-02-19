@@ -6,11 +6,15 @@ These are the mods that I've created using [ModAPI](https://modapi.survivethefor
 
 ![screenshot](AlwaysVisibleItemInfos.jpg)
 
+**Available at:** https://modapi.survivetheforest.net/mod/208/always-visible-item-infos
+
 Consumable effects and item durations are shown for highlighted items even if inventory isn't open. However, for unknown reasons, this information isn't displayed for some foods.
 
-## MoreGraphicsSettings
+## More Graphics Settings
 
 ![screenshot1](MoreGraphicsSettings1.jpg) ![screenshot2](MoreGraphicsSettings2.jpg)
+
+**Available at:** https://modapi.survivetheforest.net/mod/207/more-graphics-settings
 
 Shows additional graphics settings when **Pause** keyboard button is clicked during gameplay. Some of these settings can boost FPS significantly on potato PCs. Note that **these settings aren't saved between sessions**.
 
@@ -33,8 +37,12 @@ Shows additional graphics settings when **Pause** keyboard button is clicked dur
 
 ## Quick Crafting
 
+**Available at:** https://modapi.survivetheforest.net/mod/209/quick-crafting
+
 In inventory, click **Z** or **C** keys to quickly send the hovered item to the crafting table (instead of having to drag&drop it manually).
 
 ## Quick Eating
+
+**Available at:** https://modapi.survivetheforest.net/mod/210/quick-eating
 
 Quickly eat foods on the ground or on a tree by holding the **ACTION** key. You can also quickly eat foods in the inventory by hovering the cursor over them and then pressing the **ACTION** key. In the rare case that the mod doesn't seem to work, try reloading the save.
