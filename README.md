@@ -8,7 +8,7 @@ These are the mods that I've created using [ModAPI](https://modapi.survivethefor
 
 **Available at:** https://modapi.survivetheforest.net/mod/208/always-visible-item-infos
 
-Consumable effects and item durations are shown for highlighted items even if inventory isn't open. However, for unknown reasons, this information isn't displayed for some foods.
+Consumable effects and item durations are shown for highlighted items even if inventory isn't open.
 
 ## More Graphics Settings
 

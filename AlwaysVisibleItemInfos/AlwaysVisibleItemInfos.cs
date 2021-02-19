@@ -63,11 +63,21 @@ namespace GreenHell_AlwaysVisibleItemInfos
 			else
 			{
 				Trigger trigger = GetTrigger();
-				if( !trigger || ( !trigger.IsItem() && !( trigger is PlantFruit ) ) )
+				ItemInfo m_Info = null;
+				if( trigger )
+				{
+					if( trigger.IsItem() )
+						m_Info = ( (Item) trigger ).m_Info;
+					else if( trigger is PlantFruit )
+						m_Info = ( (PlantFruit) trigger ).m_ItemInfo;
+					else if( trigger is ItemReplacer )
+						m_Info = ( (ItemReplacer) trigger ).m_ReplaceInfo;
+				}
+
+				if( m_Info == null )
 					m_ConsumableEffects.gameObject.SetActive( false );
 				else
 				{
-					ItemInfo m_Info = trigger.IsItem() ? ( (Item) trigger ).m_Info : ( (PlantFruit) trigger ).m_ItemInfo;
 					if( !m_Info.IsConsumable() && !m_Info.IsLiquidContainer() )
 						m_ConsumableEffects.gameObject.SetActive( false );
 					else
