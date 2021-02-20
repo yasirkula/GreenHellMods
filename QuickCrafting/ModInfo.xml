@@ -8,11 +8,19 @@
       <EN>When pressed, highlighted item will be moved to the crafting table</EN>
     </Description>
   </Button>
+  <Button Standard="N" ID="ForceOpenInv">
+    <Name>
+      <EN>Force Open Inventory</EN>
+    </Name>
+    <Description>
+      <EN>(Y or N) If set to (Y)es and the inventory wasn't open when the Hotkey was pressed, inventory will be opened automatically</EN>
+    </Description>
+  </Button>
   <Name>
     <EN>Quick Crafting</EN>
   </Name>
   <Description>
     <EN>In inventory, click the configurable key (see Settings) to quickly send the hovered item to the crafting table.</EN>
   </Description>
-  <Version>1.0.0.1</Version>
+  <Version>1.0.0.2</Version>
 </Mod>

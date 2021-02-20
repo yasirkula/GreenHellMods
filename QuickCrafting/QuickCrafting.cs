@@ -15,13 +15,17 @@ namespace GreenHell_QuickCrafting
 
 	public class QuickCrafting : MonoBehaviour
 	{
-		private AudioClip dropItemToTableClip;
 		private KeyCode hotkey = KeyCode.X;
+		private bool openInventoryIfNotOpen = false;
+
+		private AudioClip dropItemToTableClip;
 
 		private void Start()
 		{
-			dropItemToTableClip = Resources.Load( "Sounds/Items/click_drop_item_backpack" ) as AudioClip;
 			hotkey = GetConfigurableKey( "QuickCrafting", "CraftKey", hotkey );
+			openInventoryIfNotOpen = GetConfigurableKey( "QuickCrafting", "ForceOpenInv", KeyCode.N ) == KeyCode.Y;
+
+			dropItemToTableClip = Resources.Load( "Sounds/Items/click_drop_item_backpack" ) as AudioClip;
 		}
 
 		private void Update()
@@ -30,26 +34,48 @@ namespace GreenHell_QuickCrafting
 			Inventory3DManager inventory = Inventory3DManager.Get();
 			CraftingManager craftingTable = CraftingManager.Get();
 
-			if( inventory && craftingTable && inventory.IsActive() && inventory.m_FocusedItem && !inventory.m_FocusedItem.m_OnCraftingTable &&
-				!inventory.m_CarriedItem && inventory.CanSetCarriedItem( true ) &&
-				TriggerController.Get().GetBestTrigger() && TriggerController.Get().GetBestTrigger().gameObject == inventory.m_FocusedItem.gameObject &&
-				!HUDItem.Get().m_Active && Input.GetKeyDown( hotkey ) )
+			if( inventory && craftingTable && !HUDItem.Get().m_Active && TriggerController.Get().GetBestTrigger() && Input.GetKeyDown( hotkey ) )
 			{
-				craftingTable.Activate();
-
-				inventory.StartCarryItem( inventory.m_FocusedItem, false );
-				craftingTable.AddItem( inventory.m_CarriedItem, true );
-
-				if( inventory.m_StackItems != null )
+				bool forceOpenedInventory = false;
+				if( !inventory.IsActive() && openInventoryIfNotOpen )
 				{
-					for( int i = 0; i < inventory.m_StackItems.Count; i++ )
-						craftingTable.AddItem( inventory.m_StackItems[i], true );
+					Item triggerItem = TriggerController.Get().GetBestTrigger().GetComponent<Item>();
+					if( triggerItem )
+					{
+						inventory.Activate();
+						if( inventory.IsActive() )
+						{
+							forceOpenedInventory = true;
+
+							inventory.m_FocusedItem = triggerItem;
+							if( !triggerItem.GetWasTriggered() )
+								triggerItem.SetWasTriggered( true );
+						}
+					}
 				}
 
-				inventory.SetCarriedItem( null, true );
+				if( inventory.IsActive() && inventory.m_FocusedItem && !inventory.m_FocusedItem.m_OnCraftingTable &&
+					!inventory.m_CarriedItem && inventory.CanSetCarriedItem( true ) &&
+					TriggerController.Get().GetBestTrigger().gameObject == inventory.m_FocusedItem.gameObject )
+				{
+					craftingTable.Activate();
 
-				if( dropItemToTableClip )
-					inventory.GetComponent<AudioSource>().PlayOneShot( dropItemToTableClip );
+					inventory.StartCarryItem( inventory.m_FocusedItem, false );
+					craftingTable.AddItem( inventory.m_CarriedItem, true );
+
+					if( inventory.m_StackItems != null )
+					{
+						for( int i = 0; i < inventory.m_StackItems.Count; i++ )
+							craftingTable.AddItem( inventory.m_StackItems[i], true );
+					}
+
+					inventory.SetCarriedItem( null, true );
+
+					if( dropItemToTableClip )
+						inventory.GetComponent<AudioSource>().PlayOneShot( dropItemToTableClip );
+				}
+				else if( forceOpenedInventory )
+					inventory.Deactivate();
 			}
 		}
 

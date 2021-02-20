@@ -29,10 +29,18 @@ namespace GreenHell_QuickEating
 		{
 			// If a food is grabbed from the ground or a tree and the ACTION key has been held for more than 0.5 seconds,
 			// eat the food instead of sending it to inventory
-			if( id == AnimEventID.GrabItem && m_TriggerActionToExecute == TriggerAction.TYPE.Take && m_TriggerToExecute && QuickEating.heldInteractionKey &&
-				( ( m_TriggerToExecute is ItemReplacer && ( (ItemReplacer) m_TriggerToExecute ).m_ReplaceInfo.m_Eatable ) ||
-				  ( m_TriggerToExecute is PlantFruit && ( (PlantFruit) m_TriggerToExecute ).m_ItemInfo.m_Eatable ) ||
-				  ( m_TriggerToExecute is Item && ( (Item) m_TriggerToExecute ).m_Info.m_Eatable ) ) )
+			ItemInfo itemInfo = null;
+			if( id == AnimEventID.GrabItem && m_TriggerActionToExecute == TriggerAction.TYPE.Take && m_TriggerToExecute && QuickEating.heldInteractionKey )
+			{
+				if( m_TriggerToExecute is ItemReplacer )
+					itemInfo = ( (ItemReplacer) m_TriggerToExecute ).m_ReplaceInfo;
+				else if( m_TriggerToExecute is PlantFruit )
+					itemInfo = ( (PlantFruit) m_TriggerToExecute ).m_ItemInfo;
+				else if( m_TriggerToExecute is Item )
+					itemInfo = ( (Item) m_TriggerToExecute ).m_Info;
+			}
+
+			if( itemInfo != null && ( itemInfo.m_Eatable || itemInfo.m_Drinkable ) )
 			{
 				Trigger trigger = m_TriggerToExecute;
 				m_TriggerActionToExecute = TriggerAction.TYPE.None;
@@ -51,7 +59,11 @@ namespace GreenHell_QuickEating
 						item.ReplRequestOwnership();
 
 					item.ReplSetDirty();
-					item.Eat();
+
+					if( itemInfo.m_Eatable )
+						item.Eat();
+					else
+						item.Drink();
 				}
 				else
 					( (PlantFruit) trigger ).Eat();
@@ -86,14 +98,18 @@ namespace GreenHell_QuickEating
 			Inventory3DManager inventory = Inventory3DManager.Get();
 			if( inventory && inventory.IsActive() && inventory.m_FocusedItem && !inventory.m_FocusedItem.m_OnCraftingTable && !inventory.m_CarriedItem &&
 				TriggerController.Get().GetBestTrigger() && TriggerController.Get().GetBestTrigger().gameObject == inventory.m_FocusedItem.gameObject &&
-				!HUDItem.Get().m_Active &&
+				!HUDItem.Get().m_Active && ( inventory.m_FocusedItem.m_Info.m_Eatable || inventory.m_FocusedItem.m_Info.m_Drinkable ) &&
 				Input.GetKeyDown( GetActionKeyCode() ) )
 			{
 				if( !inventory.m_FocusedItem.ReplIsOwner() )
 					inventory.m_FocusedItem.ReplRequestOwnership();
 
 				inventory.m_FocusedItem.ReplSetDirty();
-				inventory.m_FocusedItem.Eat();
+
+				if( inventory.m_FocusedItem.m_Info.m_Eatable )
+					inventory.m_FocusedItem.Eat();
+				else
+					inventory.m_FocusedItem.Drink();
 			}
 		}
 
