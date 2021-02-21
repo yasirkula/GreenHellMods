@@ -50,3 +50,11 @@ In inventory, click the configurable key (see mod's **Settings** in ModAPI) to q
 **Available at:** https://modapi.survivetheforest.net/mod/210/quick-eating
 
 Quickly eat foods on the ground or on a tree by holding the **ACTION** key. You can also quickly eat foods in the inventory by hovering the cursor over them and then pressing the **ACTION** key. In the rare case that the mod doesn't seem to work, try reloading the save.
+
+## Runtime Inspector
+
+![screenshot](RuntimeInspector.jpg)
+
+**Available at:** https://modapi.survivetheforest.net/mod/211/runtime-inspector
+
+Shows runtime inspector & hierarchy panels when the configurable key (see mod's **Settings** in ModAPI) is held for a short while to debug the game. It is a port of [RuntimeUnityEditor](https://github.com/ManlyMarco/RuntimeUnityEditor) to ModAPI. Licensed under [GPL-3.0 License](RuntimeInspector/LICENSE.txt). Changes made to the original code are documented inside [RuntimeInspector.cs](RuntimeInspector/RuntimeInspector.cs).

@@ -1,0 +1,18 @@
+<Mod ID="RuntimeInspector">
+  <Compatible>2.0.4</Compatible>
+  <Button Standard="P" ID="ToggleKey">
+    <Name>
+      <EN>Toggle Key</EN>
+    </Name>
+    <Description>
+      <EN>When held for a short while, toggles the visibility of runtime inspector panel</EN>
+    </Description>
+  </Button>
+  <Name>
+    <EN>Runtime Inspector</EN>
+  </Name>
+  <Description>
+    <EN>Shows runtime inspector &amp; hierarchy panels when the configurable key (see Settings) is held for a short while to debug the game.</EN>
+  </Description>
+  <Version>1.0.0.0</Version>
+</Mod>
