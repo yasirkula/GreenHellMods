@@ -15,15 +15,20 @@ namespace GreenHell_QuickCrafting
 
 	public class QuickCrafting : MonoBehaviour
 	{
-		private KeyCode hotkey = KeyCode.X;
+		private KeyCode[] hotkey;
 		private bool openInventoryIfNotOpen = false;
 
 		private AudioClip dropItemToTableClip;
 
 		private void Start()
 		{
-			hotkey = GetConfigurableKey( "QuickCrafting", "CraftKey", hotkey );
-			openInventoryIfNotOpen = GetConfigurableKey( "QuickCrafting", "ForceOpenInv", KeyCode.N ) == KeyCode.Y;
+			hotkey = GetConfigurableKey( "QuickCrafting", "CraftKey" );
+
+			foreach( KeyCode key in GetConfigurableKey( "QuickCrafting", "ForceOpenInv" ) )
+			{
+				if( key == KeyCode.Y )
+					openInventoryIfNotOpen = true;
+			}
 
 			dropItemToTableClip = Resources.Load( "Sounds/Items/click_drop_item_backpack" ) as AudioClip;
 		}
@@ -34,11 +39,16 @@ namespace GreenHell_QuickCrafting
 			Inventory3DManager inventory = Inventory3DManager.Get();
 			CraftingManager craftingTable = CraftingManager.Get();
 
-			if( inventory && craftingTable && !HUDItem.Get().m_Active && TriggerController.Get().GetBestTrigger() && Input.GetKeyDown( hotkey ) )
+			if( inventory && craftingTable &&
+				!HUDItem.Get().m_Active && // Make sure RMB menu isn't open for any item right now
+				TriggerController.Get().GetBestTrigger() && // Make sure there is a highlighted item
+				!InputsManager.Get().m_TextInputActive && // Make sure chat isn't active
+				GetButtonDown( hotkey ) ) // Make sure hotkey is pressed
 			{
 				bool forceOpenedInventory = false;
 				if( !inventory.IsActive() && openInventoryIfNotOpen )
 				{
+					// Force open inventory
 					Item triggerItem = TriggerController.Get().GetBestTrigger().GetComponent<Item>();
 					if( triggerItem )
 					{
@@ -54,9 +64,10 @@ namespace GreenHell_QuickCrafting
 					}
 				}
 
-				if( inventory.IsActive() && inventory.m_FocusedItem && !inventory.m_FocusedItem.m_OnCraftingTable &&
-					!inventory.m_CarriedItem && inventory.CanSetCarriedItem( true ) &&
-					TriggerController.Get().GetBestTrigger().gameObject == inventory.m_FocusedItem.gameObject )
+				if( inventory.IsActive() && // Make sure inventory is currently open
+					inventory.m_FocusedItem && !inventory.m_FocusedItem.m_OnCraftingTable && // Make sure the highlighted item isn't already on crafting table
+					!inventory.m_CarriedItem && inventory.CanSetCarriedItem( true ) && // Make sure we aren't drag & dropping any items at the moment
+					TriggerController.Get().GetBestTrigger().gameObject == inventory.m_FocusedItem.gameObject ) // Make sure the highlighted item is the item that the cursor is on
 				{
 					craftingTable.Activate();
 
@@ -79,9 +90,27 @@ namespace GreenHell_QuickCrafting
 			}
 		}
 
-		// Returns configurable key's corresponding KeyCode by parsing RuntimeConfiguration.xml
-		private KeyCode GetConfigurableKey( string modID, string keyID, KeyCode defaultValue )
+		// Check if hotkey is pressed this frame
+		private bool GetButtonDown( KeyCode[] keys )
 		{
+			if( keys.Length == 0 )
+				return false;
+
+			// Check if modifier keys are all held
+			for( int i = 0; i < keys.Length - 1; i++ )
+			{
+				if( !Input.GetKey( keys[i] ) )
+					return false;
+			}
+
+			return Input.GetKeyDown( keys[keys.Length - 1] );
+		}
+
+		// Returns configurable key's corresponding KeyCode(s) by parsing RuntimeConfiguration.xml
+		private KeyCode[] GetConfigurableKey( string modID, string keyID )
+		{
+			List<KeyCode> keys = new List<KeyCode>( 2 );
+
 			string configurationFile = Application.dataPath + "/../Mods/RuntimeConfiguration.xml";
 			if( System.IO.File.Exists( configurationFile ) )
 			{
@@ -100,15 +129,24 @@ namespace GreenHell_QuickCrafting
 						int keyTagEnd = configuration.IndexOf( "</Button>", keyTagStart + keyTag.Length );
 						if( keyTagEnd > keyTagStart && keyTagEnd < modTagEnd )
 						{
-							string keyStr = configuration.Substring( keyTagStart + keyTag.Length, keyTagEnd - keyTagStart - keyTag.Length );
-							if( keyStr.Length > 0 && System.Enum.IsDefined( typeof( KeyCode ), keyStr ) )
-								return (KeyCode) System.Enum.Parse( typeof( KeyCode ), keyStr );
+							string[] keyRawSplit = configuration.Substring( keyTagStart + keyTag.Length, keyTagEnd - keyTagStart - keyTag.Length ).Split( '+' );
+							for( int i = 0; i < keyRawSplit.Length; i++ )
+							{
+								// Fix typos in common modifier keys
+								if( keyRawSplit[i] == "LeftCtrl" )
+									keyRawSplit[i] = "LeftControl";
+								else if( keyRawSplit[i] == "RightCtrl" )
+									keyRawSplit[i] = "RightControl";
+
+								if( keyRawSplit[i].Length > 0 && System.Enum.IsDefined( typeof( KeyCode ), keyRawSplit[i] ) )
+									keys.Add( (KeyCode) System.Enum.Parse( typeof( KeyCode ), keyRawSplit[i] ) );
+							}
 						}
 					}
 				}
 			}
 
-			return defaultValue;
+			return keys.ToArray();
 		}
 	}
 }

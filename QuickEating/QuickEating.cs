@@ -27,7 +27,7 @@ namespace GreenHell_QuickEating
 	{
 		public override void OnAnimEvent( AnimEventID id )
 		{
-			// If a food is grabbed from the ground or a tree and the ACTION key has been held for more than 0.5 seconds,
+			// If a food is grabbed from the ground or a tree and the ACTION key has been held for more than 0.25 seconds,
 			// eat the food instead of sending it to inventory
 			ItemInfo itemInfo = null;
 			if( id == AnimEventID.GrabItem && m_TriggerActionToExecute == TriggerAction.TYPE.Take && m_TriggerToExecute && QuickEating.heldInteractionKey )
@@ -90,16 +90,20 @@ namespace GreenHell_QuickEating
 			else if( !heldInteractionKey && Input.GetKey( GetActionKeyCode() ) )
 			{
 				interactionKeyHeldTime += Time.deltaTime;
-				if( interactionKeyHeldTime >= 0.5f )
+				if( interactionKeyHeldTime >= 0.25f )
 					heldInteractionKey = true;
 			}
 
 			// If ACTION key is pressed while hovering a food in inventory, eat it
 			Inventory3DManager inventory = Inventory3DManager.Get();
-			if( inventory && inventory.IsActive() && inventory.m_FocusedItem && !inventory.m_FocusedItem.m_OnCraftingTable && !inventory.m_CarriedItem &&
-				TriggerController.Get().GetBestTrigger() && TriggerController.Get().GetBestTrigger().gameObject == inventory.m_FocusedItem.gameObject &&
-				!HUDItem.Get().m_Active && ( inventory.m_FocusedItem.m_Info.m_Eatable || inventory.m_FocusedItem.m_Info.m_Drinkable ) &&
-				Input.GetKeyDown( GetActionKeyCode() ) )
+			if( inventory && inventory.IsActive() && // Make sure inventory is currently open
+				inventory.m_FocusedItem && !inventory.m_FocusedItem.m_OnCraftingTable && // Make sure the highlighted item isn't on crafting table
+				!inventory.m_CarriedItem && // Make sure we aren't drag & dropping any items at the moment
+				TriggerController.Get().GetBestTrigger() && TriggerController.Get().GetBestTrigger().gameObject == inventory.m_FocusedItem.gameObject && // Make sure the highlighted item is the item that the cursor is on
+				!HUDItem.Get().m_Active && // Make sure RMB menu isn't open for any item right now
+				!InputsManager.Get().m_TextInputActive && // Make sure chat isn't active
+				( inventory.m_FocusedItem.m_Info.m_Eatable || inventory.m_FocusedItem.m_Info.m_Drinkable ) && // Make sure the highlighted item is eatable or drinkable
+				Input.GetKeyDown( GetActionKeyCode() ) ) // Make sure hotkey is pressed
 			{
 				if( !inventory.m_FocusedItem.ReplIsOwner() )
 					inventory.m_FocusedItem.ReplRequestOwnership();

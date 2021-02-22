@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
+using System.Xml.Serialization;
 using UnityEngine;
 using UnityEngine.Rendering.PostProcessing; // Must be added to References manually: "C:\Program Files (x86)\Steam\steamapps\common\Green Hell\GH_Data\Managed\Unity.Postprocessing.Runtime.dll"
 
@@ -16,14 +18,34 @@ namespace GreenHell_MoreGraphicsSettings
 		}
 	}
 
+	[Serializable]
+	public class SaveData
+	{
+		public string[] DisabledCameraComponents;
+		public PostProcessLayer.Antialiasing? AntiAliasingMode;
+		public string[] DisabledPostProcessingFX, DisabledPostProcessingVolumes;
+		public float? DayAmbientIntensity, NightAmbientIntensity, LightSaturation;
+		public AnisotropicFiltering? AnisotropicFiltering;
+		public float? LODDistanceMultiplier;
+		public int? LODAggressiveness, MaximumPixelLights;
+		public ShadowQuality? Shadows;
+		public bool? SoftParticles, SoftVegetation;
+		public SkinWeights? AnimatedSkinQuality;
+	}
+
 	public class MoreGraphicsSettings : MonoBehaviour
 	{
+		private const int WINDOW_ID = 300553;
+
+		private string SaveFilePath => Application.dataPath + "/../Mods/MoreGraphicsSettings.xml";
+
 		private bool uiVisible = false;
+		private Rect windowRect;
 
-		private bool interactionKeyRegistered = false;
-		private float interactionKeyHeldTime = 0f;
-
-		private KeyCode toggleKey = KeyCode.O;
+		private KeyCode[] toggleKey;
+		private float toggleKeyHeldTime = 0f;
+		private bool toggleKeyTriggered = false;
+		private bool rmbHeld = false;
 
 		private TOD_Sky skyComponent;
 		private Component[] components = new Component[0];
@@ -41,38 +63,72 @@ namespace GreenHell_MoreGraphicsSettings
 			typeof( ParametersInterpolator ), typeof( Cinemachine.CinemachineBrain ), typeof( LuxWater.LuxWater_WaterVolumeTrigger )
 		};
 
+		private GUIStyle wordWrappingBoxStyle;
+
 		private Vector2 scrollPos;
 
 		private void Start()
 		{
-			toggleKey = GetConfigurableKey( "MoreGraphicsSettings", "ToggleKey", toggleKey );
+			windowRect = new Rect( ( Screen.width - 450f ) * 0.5f, Screen.height * 0.2f, 450f, Screen.height * 0.6f );
+			toggleKey = GetConfigurableKey( "MoreGraphicsSettings", "ToggleKey" );
 		}
 
 		private void Update()
 		{
-			// Toggle the menu by holding the toggleKey (can be configured via ModAPI's user interface)
-			if( Input.GetKeyDown( toggleKey ) )
+			// Don't toggle the menu while typing something to chat
+			if( toggleKey.Length > 0 && !InputsManager.Get().m_TextInputActive )
 			{
-				interactionKeyRegistered = true;
-				interactionKeyHeldTime = 0f;
-			}
-			else if( interactionKeyRegistered )
-			{
-				if( Input.GetKeyUp( toggleKey ) )
-					interactionKeyRegistered = false;
-				else
+				// Check if configurable key is held
+				// First, make sure that all modifier keys are held
+				bool modifierKeysHeld = true;
+				for( int i = 0; i < toggleKey.Length - 1; i++ )
 				{
-					interactionKeyHeldTime += Time.unscaledDeltaTime;
-					if( interactionKeyHeldTime >= 0.5f )
+					if( !Input.GetKey( toggleKey[i] ) )
 					{
-						interactionKeyRegistered = false;
-						ToggleUI();
+						modifierKeysHeld = false;
+						toggleKeyTriggered = false;
+						break;
 					}
+				}
+
+				if( modifierKeysHeld )
+				{
+					if( !toggleKeyTriggered && Input.GetKeyDown( toggleKey[toggleKey.Length - 1] ) )
+					{
+						toggleKeyTriggered = true;
+						toggleKeyHeldTime = 0f;
+					}
+					else if( toggleKeyTriggered && Input.GetKey( toggleKey[toggleKey.Length - 1] ) )
+					{
+						toggleKeyHeldTime += Time.unscaledDeltaTime;
+						if( toggleKeyHeldTime >= 0.5f )
+						{
+							toggleKeyTriggered = false;
+							ToggleUI();
+						}
+					}
+					else
+						toggleKeyTriggered = false;
+				}
+			}
+
+			// Allow rotating the camera while RMB is held
+			if( uiVisible )
+			{
+				if( !rmbHeld && Input.GetMouseButtonDown( 1 ) )
+				{
+					rmbHeld = true;
+					Player.Get().UnblockRotation();
+				}
+				else if( rmbHeld && Input.GetMouseButtonUp( 1 ) )
+				{
+					rmbHeld = false;
+					Player.Get().BlockRotation();
 				}
 			}
 
 			// Allow closing the menu with ESC key
-			if( uiVisible && Input.GetKeyDown( KeyCode.Escape ) )
+			if( uiVisible && !InputsManager.Get().m_TextInputActive && Input.GetKeyDown( KeyCode.Escape ) )
 				SetUIVisible( false );
 		}
 
@@ -105,20 +161,61 @@ namespace GreenHell_MoreGraphicsSettings
 			if( !uiVisible )
 				return;
 
-			numberFieldIndex = 0;
-
 			GUI.skin = ModAPI.Interface.Skin;
-
-			// Show a close button at top right corner
-			if( GUI.Button( new Rect( Screen.width * 0.72f, Screen.height * 0.2f - Screen.width * 0.03f, Screen.width * 0.03f, Screen.width * 0.03f ), "X" ) )
+			if( wordWrappingBoxStyle == null )
 			{
-				SetUIVisible( false );
-
-				// Release keyboard focus from TextFields
-				GUI.FocusControl( null );
+				wordWrappingBoxStyle = new GUIStyle( GUI.skin.box )
+				{
+					wordWrap = true,
+					stretchWidth = true
+				};
 			}
 
-			GUILayout.BeginArea( new Rect( Screen.width * 0.25f, Screen.height * 0.2f, Screen.width * 0.5f, Screen.height * 0.6f ), GUI.skin.window );
+			windowRect = GUILayout.Window( WINDOW_ID, windowRect, WindowOnGUI, "- More Graphics Settings -" );
+
+			// Allow closing the menu with ESC key
+			if( Event.current.isKey && Event.current.keyCode == KeyCode.Escape && !InputsManager.Get().m_TextInputActive )
+			{
+				SetUIVisible( false );
+				GUI.FocusControl( null ); // Release keyboard focus from TextFields
+			}
+
+			// While interacting with the menu or scrolling through it, don't send input to game (i.e. don't fire an arrow or switch between weapons)
+			if( windowRect.Contains( Event.current.mousePosition ) && ( !Mathf.Approximately( Input.mouseScrollDelta.y, 0f ) || Input.GetMouseButton( 0 ) ) )
+				Input.ResetInputAxes();
+		}
+
+		private void WindowOnGUI( int id )
+		{
+			numberFieldIndex = 0;
+
+			GUILayout.BeginVertical( GUI.skin.box );
+			GUILayout.BeginHorizontal( GUILayout.Height( 40f ) );
+
+			// Show save & load buttons at the top left corner
+			if( GUILayout.Button( "SAVE", GUILayout.Width( 100f ), GUILayout.Height( 40f ) ) )
+			{
+				SaveSettings();
+				GUI.FocusControl( null ); // Release keyboard focus from TextFields
+			}
+
+			if( GUILayout.Button( "LOAD", GUILayout.Width( 100f ), GUILayout.Height( 40f ) ) )
+			{
+				LoadSettings();
+				GUI.FocusControl( null ); // Release keyboard focus from TextFields
+			}
+
+			GUILayout.FlexibleSpace();
+
+			// Show a close button at the top right corner
+			if( GUILayout.Button( "X", GUILayout.Width( 40f ), GUILayout.Height( 40f ) ) )
+			{
+				SetUIVisible( false );
+				GUI.FocusControl( null ); // Release keyboard focus from TextFields
+			}
+
+			GUILayout.EndHorizontal();
+			GUILayout.Space( 5f );
 
 			scrollPos = GUILayout.BeginScrollView( scrollPos );
 
@@ -148,7 +245,7 @@ namespace GreenHell_MoreGraphicsSettings
 			{
 				if( !ppLayer.enabled )
 				{
-					GUILayout.Box( "Camera's PostProcessLayer component must be enabled to modify these values.", GUILayout.ExpandWidth( true ) );
+					GUILayout.Box( "Camera's PostProcessLayer component must be enabled to modify these values.", wordWrappingBoxStyle );
 					GUI.enabled = false;
 				}
 
@@ -165,7 +262,7 @@ namespace GreenHell_MoreGraphicsSettings
 				if( !mainPP.enabled )
 				{
 					GUI.enabled = true;
-					GUILayout.Box( "Game post processing volume must be enabled to modify these values.", GUILayout.ExpandWidth( true ) );
+					GUILayout.Box( "Game post processing volume must be enabled to modify these values.", wordWrappingBoxStyle );
 					GUI.enabled = false;
 				}
 
@@ -242,7 +339,9 @@ namespace GreenHell_MoreGraphicsSettings
 				QualitySettings.skinWeights = SkinWeights.Unlimited;
 
 			GUILayout.EndScrollView();
-			GUILayout.EndArea();
+			GUILayout.EndVertical();
+
+			GUI.DragWindow();
 		}
 
 		private int IntField( string label, int value )
@@ -289,10 +388,10 @@ namespace GreenHell_MoreGraphicsSettings
 			numberFieldStrValues[numberFieldIndex] = GUILayout.TextField( numberFieldStrValues[numberFieldIndex] );
 
 			// Changes won't be applied until Apply button is clicked. Otherwise, trying to put restrictions to
-			// value (like only allowing value 1, 2 or 4) messes up with UX: if "1" is entered to TextField and user attempts
+			// value (like only allowing values 1, 2 or 4) messes up with UX: if "1" is entered to TextField and user attempts
 			// to clear it via Backspace and then type "2" or "4", it won't work because when "1" is cleared, resulting ""
 			// isn't a valid input (even though user was planning to change it to "2" or "4" shortly) and the TextField would be
-			// reset to "1" immediately
+			// reset back to "1" immediately
 			bool _guiEnabled = GUI.enabled;
 			GUI.enabled = numberFieldStrValues[numberFieldIndex] != value;
 			if( GUILayout.Button( "Apply" ) )
@@ -327,14 +426,183 @@ namespace GreenHell_MoreGraphicsSettings
 			}
 			else
 			{
-				player.UnblockRotation();
+				if( rmbHeld )
+					rmbHeld = false;
+				else
+					player.UnblockRotation();
+
 				player.UnblockInspection();
 			}
 		}
 
-		// Returns configurable key's corresponding KeyCode by parsing RuntimeConfiguration.xml
-		private KeyCode GetConfigurableKey( string modID, string keyID, KeyCode defaultValue )
+		private void SaveSettings()
 		{
+			// Must be invoked from OnGUI
+			if( !uiVisible )
+				return;
+
+			SaveData saveData = new SaveData();
+
+			List<string> disabledCameraComponents = new List<string>( components.Length );
+			for( int i = 0; i < components.Length; i++ )
+			{
+				Behaviour component = components[i] as Behaviour;
+				if( component && !component.enabled )
+					disabledCameraComponents.Add( component.GetType().FullName );
+			}
+
+			saveData.DisabledCameraComponents = disabledCameraComponents.ToArray();
+
+			PostProcessLayer ppLayer = CameraManager.Get().m_MainCamera.GetComponent<PostProcessLayer>();
+			if( ppLayer )
+				saveData.AntiAliasingMode = ppLayer.antialiasingMode;
+
+			PostProcessVolume mainPP = PostProcessManager.Get().GetVolume( PostProcessManager.Effect.Game );
+			if( mainPP && mainPP.profile )
+			{
+				List<PostProcessEffectSettings> mainPP_FX = mainPP.profile.settings;
+				List<string> disabledPostProcessingFX = new List<string>( mainPP_FX.Count );
+				for( int i = 0; i < mainPP_FX.Count; i++ )
+				{
+					if( !mainPP_FX[i].enabled )
+						disabledPostProcessingFX.Add( mainPP_FX[i].name );
+				}
+
+				saveData.DisabledPostProcessingFX = disabledPostProcessingFX.ToArray();
+			}
+
+			List<string> disabledPostProcessingVolumes = new List<string>( postProcessing.Length );
+			for( int i = 0; i < postProcessing.Length; i++ )
+			{
+				PostProcessVolume pp = postProcessing[i];
+				if( pp && !pp.enabled )
+					disabledPostProcessingVolumes.Add( pp.name );
+			}
+
+			saveData.DisabledPostProcessingVolumes = disabledPostProcessingVolumes.ToArray();
+
+			if( skyComponent )
+			{
+				saveData.DayAmbientIntensity = skyComponent.Day.AmbientMultiplier;
+				saveData.NightAmbientIntensity = skyComponent.Night.AmbientMultiplier;
+				saveData.LightSaturation = skyComponent.Ambient.Saturation;
+			}
+
+			saveData.AnisotropicFiltering = QualitySettings.anisotropicFiltering;
+			saveData.LODDistanceMultiplier = QualitySettings.lodBias;
+			saveData.LODAggressiveness = QualitySettings.maximumLODLevel;
+			saveData.MaximumPixelLights = QualitySettings.pixelLightCount;
+			saveData.Shadows = QualitySettings.shadows;
+			saveData.SoftParticles = QualitySettings.softParticles;
+			saveData.SoftVegetation = QualitySettings.softVegetation;
+			saveData.AnimatedSkinQuality = QualitySettings.skinWeights;
+
+			string saveFilePath = SaveFilePath;
+			Directory.CreateDirectory( Path.GetDirectoryName( saveFilePath ) );
+			using( TextWriter stream = new StreamWriter( saveFilePath ) )
+			{
+				new XmlSerializer( typeof( SaveData ) ).Serialize( stream, saveData );
+			}
+		}
+
+		private void LoadSettings()
+		{
+			// Must be invoked from OnGUI
+			if( !uiVisible )
+				return;
+
+			string saveFilePath = SaveFilePath;
+			if( !File.Exists( saveFilePath ) )
+				return;
+
+			SaveData saveData = null;
+			using( FileStream stream = new FileStream( saveFilePath, FileMode.Open, FileAccess.Read ) )
+			{
+				saveData = (SaveData) new XmlSerializer( typeof( SaveData ) ).Deserialize( stream );
+			}
+
+			if( saveData == null )
+				return;
+
+			numberFieldStrValues.Clear();
+			numberFieldUpdateStrValues.Clear();
+
+			if( saveData.DisabledCameraComponents != null )
+			{
+				for( int i = 0; i < components.Length; i++ )
+				{
+					Behaviour component = components[i] as Behaviour;
+					if( component && Array.IndexOf( saveData.DisabledCameraComponents, component.GetType().FullName ) >= 0 )
+						component.enabled = false;
+				}
+			}
+
+			if( saveData.AntiAliasingMode.HasValue )
+			{
+				PostProcessLayer ppLayer = CameraManager.Get().m_MainCamera.GetComponent<PostProcessLayer>();
+				if( ppLayer )
+					ppLayer.antialiasingMode = saveData.AntiAliasingMode.Value;
+			}
+
+			if( saveData.DisabledPostProcessingFX != null )
+			{
+				PostProcessVolume mainPP = PostProcessManager.Get().GetVolume( PostProcessManager.Effect.Game );
+				if( mainPP && mainPP.profile )
+				{
+					List<PostProcessEffectSettings> mainPP_FX = mainPP.profile.settings;
+					for( int i = 0; i < mainPP_FX.Count; i++ )
+					{
+						if( Array.IndexOf( saveData.DisabledPostProcessingFX, mainPP_FX[i].name ) >= 0 )
+							mainPP_FX[i].enabled.value = false;
+					}
+				}
+			}
+
+			if( saveData.DisabledPostProcessingVolumes != null )
+			{
+				for( int i = 0; i < postProcessing.Length; i++ )
+				{
+					PostProcessVolume pp = postProcessing[i];
+					if( pp && Array.IndexOf( saveData.DisabledPostProcessingVolumes, pp.name ) >= 0 )
+						pp.enabled = false;
+				}
+			}
+
+			if( skyComponent )
+			{
+				if( saveData.DayAmbientIntensity.HasValue )
+					skyComponent.Day.AmbientMultiplier = saveData.DayAmbientIntensity.Value;
+				if( saveData.NightAmbientIntensity.HasValue )
+					skyComponent.Night.AmbientMultiplier = saveData.NightAmbientIntensity.Value;
+				if( saveData.LightSaturation.HasValue )
+					skyComponent.Ambient.Saturation = saveData.LightSaturation.Value;
+			}
+
+			if( saveData.AnisotropicFiltering.HasValue )
+				QualitySettings.anisotropicFiltering = saveData.AnisotropicFiltering.Value;
+			if( saveData.LODDistanceMultiplier.HasValue )
+				QualitySettings.lodBias = saveData.LODDistanceMultiplier.Value;
+			if( saveData.LODAggressiveness.HasValue )
+				QualitySettings.maximumLODLevel = saveData.LODAggressiveness.Value;
+			if( saveData.MaximumPixelLights.HasValue )
+				QualitySettings.pixelLightCount = saveData.MaximumPixelLights.Value;
+			if( saveData.Shadows.HasValue )
+				QualitySettings.shadows = saveData.Shadows.Value;
+			if( saveData.SoftParticles.HasValue )
+				QualitySettings.softParticles = saveData.SoftParticles.Value;
+			if( saveData.SoftVegetation.HasValue )
+				QualitySettings.softVegetation = saveData.SoftVegetation.Value;
+			if( saveData.AnimatedSkinQuality.HasValue )
+				QualitySettings.skinWeights = saveData.AnimatedSkinQuality.Value;
+
+			GUIUtility.ExitGUI();
+		}
+
+		// Returns configurable key's corresponding KeyCode(s) by parsing RuntimeConfiguration.xml
+		private KeyCode[] GetConfigurableKey( string modID, string keyID )
+		{
+			List<KeyCode> keys = new List<KeyCode>( 2 );
+
 			string configurationFile = Application.dataPath + "/../Mods/RuntimeConfiguration.xml";
 			if( System.IO.File.Exists( configurationFile ) )
 			{
@@ -353,15 +621,24 @@ namespace GreenHell_MoreGraphicsSettings
 						int keyTagEnd = configuration.IndexOf( "</Button>", keyTagStart + keyTag.Length );
 						if( keyTagEnd > keyTagStart && keyTagEnd < modTagEnd )
 						{
-							string keyStr = configuration.Substring( keyTagStart + keyTag.Length, keyTagEnd - keyTagStart - keyTag.Length );
-							if( keyStr.Length > 0 && System.Enum.IsDefined( typeof( KeyCode ), keyStr ) )
-								return (KeyCode) System.Enum.Parse( typeof( KeyCode ), keyStr );
+							string[] keyRawSplit = configuration.Substring( keyTagStart + keyTag.Length, keyTagEnd - keyTagStart - keyTag.Length ).Split( '+' );
+							for( int i = 0; i < keyRawSplit.Length; i++ )
+							{
+								// Fix typos in common modifier keys
+								if( keyRawSplit[i] == "LeftCtrl" )
+									keyRawSplit[i] = "LeftControl";
+								else if( keyRawSplit[i] == "RightCtrl" )
+									keyRawSplit[i] = "RightControl";
+
+								if( keyRawSplit[i].Length > 0 && System.Enum.IsDefined( typeof( KeyCode ), keyRawSplit[i] ) )
+									keys.Add( (KeyCode) System.Enum.Parse( typeof( KeyCode ), keyRawSplit[i] ) );
+							}
 						}
 					}
 				}
 			}
 
-			return defaultValue;
+			return keys.ToArray();
 		}
 	}
 }
