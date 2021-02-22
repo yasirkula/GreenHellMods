@@ -64,3 +64,9 @@ Sets maximum length of common fade screens to 0.1 seconds.
 **Available at:** https://modapi.survivetheforest.net/mod/211/runtime-inspector
 
 Shows runtime inspector & hierarchy panels when the configurable key (see mod's **Settings** in ModAPI) is held for a short while to debug the game. It is a port of [RuntimeUnityEditor](https://github.com/ManlyMarco/RuntimeUnityEditor) to ModAPI. Licensed under [GPL-3.0 License](RuntimeInspector/LICENSE.txt). Changes made to the original code are documented inside [RuntimeInspector.cs](RuntimeInspector/RuntimeInspector.cs).
+
+## Stuck Save Fixer
+
+**Available at:** https://modapi.survivetheforest.net/mod/214/stuck-save-fixer
+
+When save game operation is stuck, the configurable hotkey (see mod's **Settings** in ModAPI) can be pressed to unstuck it. For technical reference, this issue is caused by a *NullReferenceException* in `ItemsManager.Save->Item.CanSave` because a destroyed Item wasn't successfully unregistered from the host.
