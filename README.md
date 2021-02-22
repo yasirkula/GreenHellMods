@@ -51,6 +51,12 @@ In inventory, click the configurable key (see mod's **Settings** in ModAPI) to q
 
 Quickly eat foods on the ground or on a tree by holding the **ACTION** key. You can also quickly eat foods in the inventory by hovering the cursor over them and then pressing the **ACTION** key.
 
+## Quick Fade
+
+**Available at:** https://modapi.survivetheforest.net/mod/212/quick-fade
+
+Sets maximum length of common fade screens to 0.1 seconds.
+
 ## Runtime Inspector
 
 ![screenshot](RuntimeInspector.jpg)
