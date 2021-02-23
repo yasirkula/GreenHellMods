@@ -10,6 +10,14 @@ These are the mods that I've created using [ModAPI](https://modapi.survivethefor
 
 Consumable effects and item durations are shown for highlighted items even if inventory isn't open.
 
+## Highlight Vicinity Items
+
+![screenshot](HighlightVicinityItems.jpg)
+
+**Available at:** https://modapi.survivetheforest.net/mod/215/highlight-vicinity-items
+
+Highlighting all interactable items within player's vicinity when the configurable key (see mod's **Settings** in ModAPI) is pressed. Use *CTRL+Mouse wheel* to change scan radius.
+
 ## More Graphics Settings
 
 ![screenshot1](MoreGraphicsSettings1.jpg) ![screenshot2](MoreGraphicsSettings2.jpg)

@@ -37,7 +37,7 @@ namespace GreenHell_SaveGameFixer
 						if( item.m_Info == null )
 							ModAPI.Log.Write( "=== Encountered item with null info" );
 						else
-							ModAPI.Log.Write( "=== Encountered item with info: " + item.m_Info.m_Type + " " + item.m_Info.m_FakeItem );
+							ModAPI.Log.Write( "=== Encountered item with info: " + item.m_Info.m_Type + " " + item.m_Info.m_ID + " " + item.m_Info.m_FakeItem );
 
 						itemsToRemove.Add( item );
 					}
