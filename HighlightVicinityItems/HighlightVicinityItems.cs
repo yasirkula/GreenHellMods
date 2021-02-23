@@ -36,7 +36,7 @@ namespace GreenHell_HighlightVicinityItems
 		private const float UPDATE_INTERVAL = 0.25f;
 
 		private KeyCode[] hotkey;
-		private float radius = 15f;
+		private float radius = 20f;
 
 		private bool isEnabled = false;
 		private float nextUpdateTime;
@@ -122,7 +122,14 @@ namespace GreenHell_HighlightVicinityItems
 						}
 					}
 
-					bool isInRange = trigger.transform.position.Distance2DSqr( playerPos ) <= rangeSqr;
+					// Don't highlight rivers because their highlight is glitchy
+					if( trigger is LiquidSource )
+						continue;
+
+					bool isInRange = false;
+					if( !item || !item.m_InPlayersHand ) // Don't highlight items held by player
+						isInRange = trigger.transform.position.Distance2DSqr( playerPos ) <= rangeSqr;
+
 					if( isInRange )
 					{
 						if( !HighlightedItems.Contains( trigger ) )
