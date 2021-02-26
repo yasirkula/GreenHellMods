@@ -78,3 +78,9 @@ Shows runtime inspector & hierarchy panels when the configurable key (see mod's 
 **Available at:** https://modapi.survivetheforest.net/mod/214/stuck-save-fixer
 
 When save game operation is stuck, the configurable hotkey (see mod's **Settings** in ModAPI) can be pressed to unstuck it. For technical reference, this issue is caused by a *NullReferenceException* in `ItemsManager.Save->Item.CanSave` because a destroyed Item wasn't successfully unregistered from the host.
+
+## Teleport To Player
+
+**Available at:** https://modapi.survivetheforest.net/mod/216/teleport-to-player
+
+Type `/tp player_name` to chat to teleport to that player.

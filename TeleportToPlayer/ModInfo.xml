@@ -1,0 +1,10 @@
+<Mod ID="TeleportToPlayer">
+  <Compatible>2.0.4</Compatible>
+  <Name>
+    <EN>Teleport To Player</EN>
+  </Name>
+  <Description>
+    <EN>Type "/tp player_name" to chat (without quotes)</EN>
+  </Description>
+  <Version>1.0.0.0</Version>
+</Mod>
