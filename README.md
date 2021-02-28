@@ -4,15 +4,32 @@ These are the mods that I've created using [ModAPI](https://modapi.survivethefor
 
 ## Always Visible Item Infos
 
-![screenshot](AlwaysVisibleItemInfos.jpg)
+![screenshot](Screenshots/AlwaysVisibleItemInfos.jpg)
 
 **Available at:** https://modapi.survivetheforest.net/mod/208/always-visible-item-infos
 
 Consumable effects and item durations are shown for highlighted items even if inventory isn't open.
 
+## Gulliver Mod
+
+![screenshot1](Screenshots/GulliverMod1.jpg) ![screenshot2](Screenshots/GulliverMod2.jpg) ![screenshot3](Screenshots/GulliverMod3.jpg) ![screenshot4](Screenshots/GulliverMod4.jpg) ![screenshot5](Screenshots/GulliverMod5.jpg) ![screenshot6](Screenshots/GulliverMod6.jpg)
+
+**Available at:** https://modapi.survivetheforest.net/mod/217/gulliver-mod
+
+Change the size of entities (including yourself) in the world. Press the configurable key (see mod's **Settings** in ModAPI) for a short while to access the scale options. In a multiplayer server, only the host can activate the mod.
+
+While the mod is active, you can use the **Numpad -** (scale down), **Numpad +** (scale up) and **Numpad \*** (asterisk)(reset scale) shortcuts. If you hold down the **Left Alt** key, these changes will be applied to the picked entity rather than the player.
+
+Known issues:
+
+- In rare cases, rivers and environment props can glitch out (e.g. disappear from the screen) after scaling yourself. Resetting your scale should resolve the issue. Then, you can change your scale again
+- Animation speeds of scaled entities may not be synchronized on all clients in a multiplayer server
+- Items held by a player may occasionally not match that player's scale on other players' screens
+- Heavy items (logs, big stones, etc.) dropped by scaled players might not be reset to their default scales on other players' screens (issue will be resolved when the item is picked up)
+
 ## Highlight Vicinity Items
 
-![screenshot](HighlightVicinityItems.jpg)
+![screenshot](Screenshots/HighlightVicinityItems.jpg)
 
 **Available at:** https://modapi.survivetheforest.net/mod/215/highlight-vicinity-items
 
@@ -20,7 +37,7 @@ Highlighting all interactable items within player's vicinity when the configurab
 
 ## More Graphics Settings
 
-![screenshot1](MoreGraphicsSettings1.jpg) ![screenshot2](MoreGraphicsSettings2.jpg)
+![screenshot1](Screenshots/MoreGraphicsSettings1.jpg) ![screenshot2](Screenshots/MoreGraphicsSettings2.jpg)
 
 **Available at:** https://modapi.survivetheforest.net/mod/207/more-graphics-settings
 
@@ -67,7 +84,7 @@ Sets maximum length of common fade screens to 0.1 seconds.
 
 ## Runtime Inspector
 
-![screenshot](RuntimeInspector.jpg)
+![screenshot](Screenshots/RuntimeInspector.jpg)
 
 **Available at:** https://modapi.survivetheforest.net/mod/211/runtime-inspector
 
